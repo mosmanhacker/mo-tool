@@ -2,7 +2,5 @@
   "name":"mo-tool",
   "version":"1.0.0",
   "main":"mo-tool.js",
-  "scripts":{"start":"node mo-tool.js"},
-  "keywords":["phishing","bot"],
-  "author":""
+  "scripts":{"start":"node mo-tool.js"}
 }
