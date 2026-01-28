@@ -1,0 +1,6 @@
+{
+  "name":"mo-tool",
+  "version":"1.0.0",
+  "main":"mo-tool.js",
+  "scripts":{"start":"node mo-tool.js"}
+}
