@@ -10,8 +10,8 @@ const rl=readline.createInterface({input:process.stdin,output:process.stdout})
 const ask=q=>new Promise(res=>rl.question(q,ans=>res(ans)))
 
 const PAGES={
-  fb:'https://mosmanhacker.github.io/fb',
-  ig:'https://YOUR_2ND.github.io/ig',
+  fb:'https://mosmanhacker.github.io/fb/',
+  ig:'https://mosmanhacker.github.io/fb/',
   tt:'https://YOUR_2ND.github.io/tt'
 }
 
