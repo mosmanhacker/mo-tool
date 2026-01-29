@@ -2,7 +2,6 @@
 set -e
 command -v node >/dev/null || { echo "Install Node.js: pkg install nodejs"; exit 1; }
 
-# تثبيت المكاتب
 if [ ! -d node_modules ]; then
   echo "Installing packages..."
   npm install telegraf express axios ua-parser-js
