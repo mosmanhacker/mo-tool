@@ -2,5 +2,11 @@
   "name":"mo-tool",
   "version":"1.0.0",
   "main":"mo-tool.js",
-  "scripts":{"start":"node mo-tool.js"}
+  "scripts":{"start":"node mo-tool.js"},
+  "dependencies":{
+    "telegraf":"^4.15.6",
+    "express":"^4.19.2",
+    "axios":"^1.6.2",
+    "ua-parser-js":"^1.0.37"
+  }
 }
